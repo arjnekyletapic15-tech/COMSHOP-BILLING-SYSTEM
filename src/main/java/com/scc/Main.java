@@ -1,5 +1,6 @@
 package com.scc;
 
+import com.scc.dao.DatabaseInitializer;
 import com.scc.dao.UserDao;
 import com.scc.model.User;
 import com.scc.ui.AdminMenu;
@@ -13,29 +14,61 @@ public class Main {
     private static final UserDao userDao = new UserDao();
 
     public static void main(String[] args) {
+        // Initialize SQLite database and tables
+        DatabaseInitializer.initializeDatabase();
 
         boolean running = true;
 
         while (running) {
             System.out.println();
             System.out.println("========================================");
-            System.out.println("     COMPUTER SHOP TIME & BILLING       ");
-            System.out.println("                SYSTEM                  ");
+            System.out.println("      COMPUTER SHOP BILLING SYSTEM      ");
             System.out.println("========================================");
             System.out.println("1. Login");
             System.out.println("2. Register");
             System.out.println("3. Exit");
             System.out.print("Choose an option: ");
-            String choice = sc.nextLine().trim();
+
+            int choice;
+            try {
+                choice = Integer.parseInt(sc.nextLine().trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                continue;
+            }
 
             switch (choice) {
-                case "1":
+                case 1:
                     handleLogin();
                     break;
-                case "2":
-                    handleRegister();
+                case 2:
+                    System.out.print("Enter a new username: ");
+                    String user = sc.nextLine().trim();
+                    System.out.print("Enter a new password: ");
+                    String pass = sc.nextLine().trim();
+                    System.out.print("Select role [1] STAFF [2] USER: ");
+                    String roleChoice = sc.nextLine().trim();
+
+                    String role;
+                    switch (roleChoice) {
+                        case "1":
+                            role = "STAFF";
+                            break;
+                        case "2":
+                            role = "USER";
+                            break;
+                        default:
+                            role = null;
+                    }
+
+                    if (role != null) {
+                        userDao.registerUser(user, pass, role, "PENDING");
+                        System.out.println("Registration submitted successfully! Waiting for admin approval.");
+                    } else {
+                        System.out.println("Invalid role selection. Please try again.");
+                    }
                     break;
-                case "3":
+                case 3:
                     System.out.println("Exiting the system. Goodbye!");
                     running = false;
                     break;
@@ -43,39 +76,7 @@ public class Main {
                     System.out.println("Invalid choice. Please try again.");
             }
         }
-    }
-
-    private static void handleRegister() {
-        System.out.print("Enter a new username: ");
-        String user = sc.nextLine().trim();
-        System.out.print("Enter a new password: ");
-        String pass = sc.nextLine().trim();
-
-        if (user.isEmpty() || pass.isEmpty()) {
-            System.out.println("Username and password cannot be empty.");
-            return;
-        }
-
-        System.out.print("Select role [1] CASHIER [2] SUPERVISOR: ");
-        String roleChoice = sc.nextLine().trim();
-
-        String role;
-        switch (roleChoice) {
-            case "1":
-                role = "CASHIER";
-                break;
-            case "2":
-                role = "SUPERVISOR";
-                break;
-            default:
-                role = null;
-        }
-
-        if (role != null) {
-            userDao.registerUser(user, pass, role, "PENDING");
-        } else {
-            System.out.println("Invalid role selection. Please try again.");
-        }
+        sc.close();
     }
 
     private static void handleLogin() {
@@ -88,14 +89,14 @@ public class Main {
 
         if (user != null) {
             System.out.println("Login successful! Welcome, " + user.username() + " | ROLE: " + user.roles());
-            switch (user.roles()) {
+            switch (user.roles().toUpperCase()) {
                 case "ADMIN" -> new AdminMenu(userDao, sc).display(user);
-                case "CASHIER" -> new StaffMenu(userDao, sc).display(user);
-                case "SUPERVISOR" -> new UserMenu(userDao, sc).display(user);
+                case "STAFF" -> new StaffMenu(userDao, sc).display(user);
+                case "USER" -> new UserMenu(userDao, sc).display(user);
                 default -> System.out.println("Unknown role. Access denied.");
             }
         } else {
-            System.out.println("Invalid username or password.");
+            System.out.println("Login failed. Invalid username, password, or account pending approval.");
         }
     }
 }

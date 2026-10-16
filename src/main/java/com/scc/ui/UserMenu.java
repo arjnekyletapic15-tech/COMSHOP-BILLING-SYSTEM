@@ -2,79 +2,53 @@ package com.scc.ui;
 
 import com.scc.dao.UserDao;
 import com.scc.model.User;
-
 import java.util.Scanner;
 
 public class UserMenu {
     private final UserDao userDao;
-    private final Scanner sc;
+    private final Scanner scanner;
 
-    public UserMenu(UserDao userDao, Scanner sc) {
+    public UserMenu(UserDao userDao, Scanner scanner) {
         this.userDao = userDao;
-        this.sc = sc;
+        this.scanner = scanner;
     }
 
     public void display(User user) {
-        boolean running = true;
-        while (running) {
-            System.out.println();
+        boolean loggedIn = true;
+        while (loggedIn) {
+            System.out.println("\n========================================");
+            System.out.println("      COMPUTER SHOP CUSTOMER MENU       ");
             System.out.println("========================================");
-            System.out.println("COMPUTER SHOP TIME & BILLING - SUPERVISOR");
-            System.out.println("========================================");
-            System.out.println(" Logged in as: " + user.username());
-            System.out.println("----------------------------------------");
-            System.out.println(" [1] Approve Timer Override / Extension / Refund");
-            System.out.println(" [2] View Shift Cash Totals");
-            System.out.println(" [3] Generate Shift Report");
-            System.out.println(" [4] Handle Customer Time Disputes");
-            System.out.println(" [0] Logout");
+            System.out.println("1. View PC Rental Rates & Promos");
+            System.out.println("2. View Remaining Account Time / Balance");
+            System.out.println("3. View Rental / Session History");
+            System.out.println("4. Update Account Details");
+            System.out.println("0. Logout");
             System.out.println("----------------------------------------");
             System.out.print("Choose an option: ");
-            String choice = sc.nextLine().trim();
+
+            String choice = scanner.nextLine().trim();
 
             switch (choice) {
                 case "1":
-                    approveOverride();
+                    System.out.println("\nView PC Rental Rates & Promos");
                     break;
                 case "2":
-                    viewShiftCashTotals();
+                    System.out.println("\nView Remaining Account Time / Balance");
                     break;
                 case "3":
-                    generateShiftReport();
+                    System.out.println("\nView Rental / Session History");
                     break;
                 case "4":
-                    handleDisputes();
+                    System.out.println("\nUpdate Account Details");
                     break;
                 case "0":
-                    System.out.println("You have been logged out.");
-                    running = false; // goes back to the main menu
+                    System.out.println("\nYou have been logged out.");
+                    loggedIn = false;
                     break;
                 default:
-                    System.out.println("Invalid choice. Please try again.");
+                    System.out.println("\nInvalid choice. Please try again.");
             }
         }
-    }
-
-    private void approveOverride() {
-        System.out.println("\n--- APPROVE OVERRIDE / EXTENSION / REFUND ---");
-        System.out.println("Review and approve manual timer changes or refunds.");
-    }
-
-    private void viewShiftCashTotals() {
-        System.out.println("\n--- SHIFT CASH TOTALS ---");
-        System.out.println("Total cash collected per cashier for the current shift.");
-
-    }
-
-    private void generateShiftReport() {
-        System.out.println("\n--- SHIFT REPORT ---");
-        System.out.println("Cash, minutes sold, and transaction count for the shift.");
-
-    }
-
-    private void handleDisputes() {
-        System.out.println("\n--- CUSTOMER TIME DISPUTES ---");
-        System.out.println("Look up a session and resolve an escalated complaint.");
-
     }
 }

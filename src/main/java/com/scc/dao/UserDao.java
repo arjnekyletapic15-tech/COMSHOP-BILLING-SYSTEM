@@ -7,6 +7,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserDao {
 
@@ -30,22 +32,21 @@ public class UserDao {
                 System.out.println("Default admin created successfully.");
             }
         } catch (SQLException e) {
-            System.err.println("Error occurred while checking/creating default admin: " + e.getMessage());
+            System.err.println("Error checking/creating default admin: " + e.getMessage());
         }
     }
 
     public boolean registerUser(String username, String password, String roles, String status) {
+        String sql = "INSERT INTO users (username, password, roles, status) VALUES (?, ?, ?, ?)";
 
-        String sql ="INSERT INTO users (username, password, roles, status) VALUES (?, ?, ?, 'PENDING')";
-
-        try(Connection conn = DatabaseConnection.getConnection();
-            PreparedStatement pstmt = conn.prepareStatement(sql)){
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, username);
             pstmt.setString(2, password);
             pstmt.setString(3, roles.toUpperCase());
+            pstmt.setString(4, status.toUpperCase());
             pstmt.executeUpdate();
-            System.out.println("User registered successfully, Waiting for Approval.");
             return true;
 
         } catch (SQLException e) {
@@ -67,18 +68,15 @@ public class UserDao {
                 if (rs.next()) {
                     String status = rs.getString("status");
                     if ("PENDING".equalsIgnoreCase(status)) {
-                        System.out.println("Your account is pending approval. Please wait for admin approval.");
-                        return null;
+                        return null; // Treated as failed login if pending approval
                     }
                     return new User(
                             rs.getInt("id"),
                             rs.getString("username"),
                             rs.getString("password"),
                             rs.getString("roles"),
-                            status);
-                } else {
-                    System.out.println("Invalid username or password.");
-                    return null;
+                            status
+                    );
                 }
             }
 
@@ -86,5 +84,67 @@ public class UserDao {
             System.err.println("Error occurred while logging in: " + e.getMessage());
         }
         return null;
+    }
+
+    public boolean updateUserStatus(int userId, String status) {
+        String sql = "UPDATE users SET status = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, status.toUpperCase());
+            pstmt.setInt(2, userId);
+            return pstmt.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.err.println("Error updating user status: " + e.getMessage());
+        }
+        return false;
+    }
+
+    public List<User> getAllUsers() {
+        List<User> users = new ArrayList<>();
+        String sql = "SELECT * FROM users";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                users.add(new User(
+                        rs.getInt("id"),
+                        rs.getString("username"),
+                        rs.getString("password"),
+                        rs.getString("roles"),
+                        rs.getString("status")
+                ));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching all users: " + e.getMessage());
+        }
+        return users;
+    }
+
+    public List<User> getPendingUsers() {
+        List<User> pendingUsers = new ArrayList<>();
+        String sql = "SELECT * FROM users WHERE status = 'PENDING'";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                pendingUsers.add(new User(
+                        rs.getInt("id"),
+                        rs.getString("username"),
+                        rs.getString("password"),
+                        rs.getString("roles"),
+                        rs.getString("status")
+                ));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching pending users: " + e.getMessage());
+        }
+        return pendingUsers;
     }
 }
