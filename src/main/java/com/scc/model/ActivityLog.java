@@ -8,7 +8,7 @@ public record ActivityLog(
         String description,
         String timestamp
 ) {
-    /** Full action text, e.g. "USER_APPROVED: Admin [1] approved account for User ID 12". */
+
     public String action() {
         return actionType + ": " + description;
     }

@@ -104,7 +104,7 @@ public class UserDao {
         return false;
     }
 
-    /** Approves a pending account and records USER_APPROVED in the audit log. */
+
     public boolean approveUser(int adminId, int userId) {
         boolean success = updateUserStatus(userId, "APPROVED");
         if (success) {
@@ -114,7 +114,7 @@ public class UserDao {
         return success;
     }
 
-    /** Changes a user's role and status and records USER_UPDATED in the audit log. */
+
     public boolean updateUserRoleAndStatus(int adminId, int userId, String role, String status) {
         String sql = "UPDATE users SET roles = ?, status = ? WHERE id = ?";
 

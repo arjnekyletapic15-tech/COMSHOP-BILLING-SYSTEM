@@ -12,10 +12,7 @@ public class RentalDao {
 
     private final ActivityLogDao activityLogDao = new ActivityLogDao();
 
-    /**
-     * Core business process: records a PC rental session and logs RENTAL_PROCESSED.
-     * @return the new rental ID, or -1 on failure
-     */
+
     public int processRental(int staffId, String customerName, String pcStation, int minutes) {
         String sql = "INSERT INTO rentals (staff_id, customer_name, pc_station, minutes, total_amount, status) "
                 + "VALUES (?, ?, ?, ?, ?, 'ACTIVE')";
@@ -46,7 +43,6 @@ public class RentalDao {
         return -1;
     }
 
-    /** Lifecycle change: updates a rental's status and logs RENTAL_STATUS_UPDATED. */
     public boolean updateRentalStatus(int staffId, int rentalId, String newStatus) {
         String selectSql = "SELECT status FROM rentals WHERE id = ?";
         String updateSql = "UPDATE rentals SET status = ? WHERE id = ?";

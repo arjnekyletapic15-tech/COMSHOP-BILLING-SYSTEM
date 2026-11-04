@@ -56,10 +56,7 @@ public class DatabaseInitializer {
         }
     }
 
-    /**
-     * If an older/incorrect activity_logs table already exists (CREATE TABLE IF NOT EXISTS
-     * would skip it and every insert would then fail), drop it so it is rebuilt correctly.
-     */
+
     private static void repairActivityLogsIfOutdated(Statement stmt) throws SQLException {
         List<String> existing = new ArrayList<>();
         try (ResultSet rs = stmt.executeQuery("PRAGMA table_info(activity_logs)")) {
