@@ -12,6 +12,8 @@ import java.util.List;
 
 public class UserDao {
 
+    private final ActivityLogDao activityLogDao = new ActivityLogDao();
+
     public UserDao() {
         try (Connection conn = DatabaseConnection.getConnection()) {
             defaultAdmin(conn);
@@ -98,6 +100,39 @@ public class UserDao {
 
         } catch (SQLException e) {
             System.err.println("Error updating user status: " + e.getMessage());
+        }
+        return false;
+    }
+
+    /** Approves a pending account and records USER_APPROVED in the audit log. */
+    public boolean approveUser(int adminId, int userId) {
+        boolean success = updateUserStatus(userId, "APPROVED");
+        if (success) {
+            activityLogDao.logAction(adminId, "USER_APPROVED",
+                    "Admin [" + adminId + "] approved account for User ID " + userId);
+        }
+        return success;
+    }
+
+    /** Changes a user's role and status and records USER_UPDATED in the audit log. */
+    public boolean updateUserRoleAndStatus(int adminId, int userId, String role, String status) {
+        String sql = "UPDATE users SET roles = ?, status = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, role.toUpperCase());
+            pstmt.setString(2, status.toUpperCase());
+            pstmt.setInt(3, userId);
+
+            if (pstmt.executeUpdate() > 0) {
+                activityLogDao.logAction(adminId, "USER_UPDATED",
+                        "Admin [" + adminId + "] changed role of User " + userId + " to "
+                                + role.toUpperCase() + " (status: " + status.toUpperCase() + ")");
+                return true;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error updating user role/status: " + e.getMessage());
         }
         return false;
     }
