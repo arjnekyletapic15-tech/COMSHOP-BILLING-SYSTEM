@@ -69,8 +69,8 @@ public class UserDao {
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     String status = rs.getString("status");
-                    if ("PENDING".equalsIgnoreCase(status)) {
-                        return null; // Treated as failed login if pending approval
+                    if (!"APPROVED".equalsIgnoreCase(status)) {
+                        return null; // PENDING or REJECTED accounts cannot log in
                     }
                     return new User(
                             rs.getInt("id"),
@@ -104,7 +104,6 @@ public class UserDao {
         return false;
     }
 
-
     public boolean approveUser(int adminId, int userId) {
         boolean success = updateUserStatus(userId, "APPROVED");
         if (success) {
@@ -113,7 +112,6 @@ public class UserDao {
         }
         return success;
     }
-
 
     public boolean updateUserRoleAndStatus(int adminId, int userId, String role, String status) {
         String sql = "UPDATE users SET roles = ?, status = ? WHERE id = ?";

@@ -1,24 +1,25 @@
-package com.scc;
+package com.scc.ui;
 
 import com.scc.dao.ActivityLogDao;
 import com.scc.dao.DatabaseInitializer;
 import com.scc.dao.RentalDao;
 import com.scc.dao.UserDao;
 import com.scc.model.User;
-import com.scc.ui.AdminMenu;
-import com.scc.ui.StaffMenu;
-import com.scc.ui.UserMenu;
 
 import java.util.Scanner;
 
 public class Authentication {
     private static final Scanner sc = new Scanner(System.in);
-    private static final UserDao userDao = new UserDao();
-    private static final ActivityLogDao activityLogDao = new ActivityLogDao();
-    private static final RentalDao rentalDao = new RentalDao();
+    private static UserDao userDao;
+    private static ActivityLogDao activityLogDao;
+    private static RentalDao rentalDao;
 
     public static void main(String[] args) {
+        // Tables must exist BEFORE the DAOs run (UserDao seeds the default admin).
         DatabaseInitializer.initializeDatabase();
+        userDao = new UserDao();
+        activityLogDao = new ActivityLogDao();
+        rentalDao = new RentalDao();
 
         boolean running = true;
 
@@ -45,31 +46,7 @@ public class Authentication {
                     handleLogin();
                     break;
                 case 2:
-                    System.out.print("Enter a new username: ");
-                    String user = sc.nextLine().trim();
-                    System.out.print("Enter a new password: ");
-                    String pass = sc.nextLine().trim();
-                    System.out.print("Select role [1] STAFF [2] USER: ");
-                    String roleChoice = sc.nextLine().trim();
-
-                    String role;
-                    switch (roleChoice) {
-                        case "1":
-                            role = "STAFF";
-                            break;
-                        case "2":
-                            role = "USER";
-                            break;
-                        default:
-                            role = null;
-                    }
-
-                    if (role != null) {
-                        userDao.registerUser(user, pass, role, "PENDING");
-                        System.out.println("Registration submitted successfully! Waiting for admin approval.");
-                    } else {
-                        System.out.println("Invalid role selection. Please try again.");
-                    }
+                    handleRegister();
                     break;
                 case 3:
                     System.out.println("Exiting the system. Goodbye!");
@@ -80,6 +57,36 @@ public class Authentication {
             }
         }
         sc.close();
+    }
+
+    private static void handleRegister() {
+        System.out.print("Enter a new username: ");
+        String user = sc.nextLine().trim();
+        System.out.print("Enter a new password: ");
+        String pass = sc.nextLine().trim();
+
+        if (user.isEmpty() || pass.isEmpty()) {
+            System.out.println("Username and password are required.");
+            return;
+        }
+
+        System.out.print("Select role [1] STAFF [2] USER: ");
+        String role = switch (sc.nextLine().trim()) {
+            case "1" -> "STAFF";
+            case "2" -> "USER";
+            default -> null;
+        };
+
+        if (role == null) {
+            System.out.println("Invalid role selection. Please try again.");
+            return;
+        }
+
+        if (userDao.registerUser(user, pass, role, "PENDING")) {
+            System.out.println("Registration submitted successfully! Waiting for admin approval.");
+        } else {
+            System.out.println("Registration failed. That username may already be taken.");
+        }
     }
 
     private static void handleLogin() {
@@ -105,7 +112,7 @@ public class Authentication {
             activityLogDao.logAction(user.id(), "LOGOUT",
                     "User " + user.username() + " (ID: " + user.id() + ") logged out.");
         } else {
-            System.out.println("Login failed. Invalid username, password, or account pending approval.");
+            System.out.println("Login failed. Invalid credentials, or the account is not approved.");
         }
     }
 }
